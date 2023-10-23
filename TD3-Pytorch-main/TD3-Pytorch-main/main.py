@@ -27,11 +27,11 @@ parser.add_argument('--save_interval', type=int, default=1e3, help='Model saving
 parser.add_argument('--eval_interval', type=int, default=1e3, help='Model evaluating interval, in steps.')
 
 parser.add_argument('--policy_delay_freq', type=int, default=1, help='Delay frequency of Policy Updating')
-parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
+parser.add_argument('--gamma', type=float, default=1.0, help='Discounted Factor')
 parser.add_argument('--net_width', type=int, default=64, help='Hidden net width') #256
 parser.add_argument('--a_lr', type=float, default=1e-6, help='Learning rate of actor')
 parser.add_argument('--c_lr', type=float, default=1e-6, help='Learning rate of critic')
-parser.add_argument('--batch_size', type=int, default=1024, help='batch_size of training') #256
+parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training') #256
 parser.add_argument('--exp_noise', type=float, default=0.15, help='explore noise')
 parser.add_argument('--noise_decay', type=float, default=0.998, help='Decay rate of explore noise')
 opt = parser.parse_args()
@@ -40,6 +40,15 @@ print(opt)
 
 
 def main():
+    print(f"Is CUDA supported by this system? {torch.cuda.is_available()}")
+    print(f"CUDA version: {torch.version.cuda}")
+ 
+    # Storing ID of current CUDA device
+    cuda_id = torch.cuda.current_device()
+    print(f"ID of current CUDA device:{torch.cuda.current_device()}")
+
+    print(f"Name of current CUDA device:{torch.cuda.get_device_name(cuda_id)}")
+    
     EnvName = ['Pendulum-v1','LunarLanderContinuous-v2','Humanoid-v2','HalfCheetah-v2','BipedalWalker-v3','BipedalWalkerHardcore-v3', 'gd_env-v0']
     BrifEnvName = ['PV1', 'LLdV2', 'Humanv2', 'HCv2','BWv3', 'BWHv3', 'gd_env-v0'] #Brief Environment Name.
     env_with_dw = [False, True, True, False, True, True, False]  # dw:die and win
@@ -63,7 +72,7 @@ def main():
     print("Random Seed: {}".format(random_seed))
     torch.manual_seed(random_seed)
     env.seed(random_seed)
-    eval_env.seed(random_seed)
+    # eval_env.seed(random_seed)
     np.random.seed(random_seed)
 
     if opt.write:
@@ -92,7 +101,7 @@ def main():
     replay_buffer = ReplayBuffer(state_dim, action_dim, max_size=int(1e6))
 
     if opt.render:
-        score, traj, function_nb = evaluate_policy(env, model, opt.render, turns=1)
+        score, traj, _ = evaluate_policy(env, model, opt.render, turns=1)
         print('EnvName:', BrifEnvName[EnvIdex], 'score:', score)
         traj = np.reshape(traj,(int(np.size(traj,0)/2),2))
         np.savetxt("TD3_trajectory.txt", traj, fmt='%4.15f', delimiter=' ') 

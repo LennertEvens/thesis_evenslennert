@@ -72,10 +72,10 @@ class TD3_Agent(object):
 		action_dim,
 		max_action,
 		gamma=0.99,
-		net_width=128, #128
+		net_width=16, #128
 		a_lr=1e-6, #1e-4
 		c_lr=1e-6, #1e-4
-		batch_size = 1024, #256
+		batch_size = 256, #256
 		policy_delay_freq = 1
 	):
 

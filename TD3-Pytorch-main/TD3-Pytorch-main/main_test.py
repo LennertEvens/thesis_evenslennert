@@ -41,7 +41,7 @@ for i in range(np.size(lines2)):
 TD3_traj = np.reshape(TD3_traj,(int(np.size(TD3_traj)/2),2))
 
 visualize(traj, traj_ls, TD3_traj, function_nb)
-
+plt.clf()
 plt.semilogy(np.linspace(1,np.size(traj,0),np.size(traj,0)),LA.norm(traj,axis=1),label='GD')
 plt.semilogy(np.linspace(1,np.size(traj_ls,0),np.size(traj_ls,0)),LA.norm(traj_ls,axis=1),label='GD+LS')
 plt.semilogy(TD3_data[0:,0], TD3_data[0:,1],'g--',label='TD3')
@@ -49,4 +49,5 @@ plt.xlabel('iterations')
 plt.ylabel('||abs error||')
 plt.legend(loc="upper right")
 plt.grid()
-plt.show()
+# plt.show()
+plt.savefig('convergence.png')

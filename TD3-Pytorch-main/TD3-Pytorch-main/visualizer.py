@@ -42,6 +42,7 @@ def visualize(data, data_ls, data_td3, function_nb):
     plt.title('TD3')
     ax = plt.gca()
     ax.set_aspect('equal', adjustable='box')
-    plt.show()
+    # plt.show()
+    plt.savefig('trajectories.png')
     
 

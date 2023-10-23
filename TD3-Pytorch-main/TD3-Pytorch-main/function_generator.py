@@ -4,15 +4,15 @@ filename = "functions.txt"
 nb_functions = 100
 
 def generate_Q():
-    alpha = -np.pi/2 + np.pi*np.random.rand()
+    alpha = -np.pi/4 + 0.5*np.pi*np.random.rand()
     beta = -np.pi/2 + np.pi*np.random.rand()
     alpha = 0.
-    beta = 0.
+    # beta = 0.
     U1 = np.array([[np.cos(alpha), -np.sin(alpha)], [np.sin(alpha), np.cos(alpha)]])
     U2 = np.array([[np.cos(beta), -np.sin(beta)], [np.sin(beta), np.cos(beta)]])
     Q = np.array([[1, 0],[0, 1+(10-1)*np.random.rand()]])
     Q = np.matmul(U1,Q)
-    Q = np.matmul(Q,U2)
+    Q = np.matmul(Q,np.transpose(U1))
     return Q
 
 
