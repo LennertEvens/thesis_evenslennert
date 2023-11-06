@@ -1,9 +1,12 @@
 import numpy as np
 
 class Objective:
-    def __init__(self, function_nb):
+    def __init__(self, function_nb, mode='train'):
         
-        filename = "functions.txt"
+        if mode == 'train':
+            filename = "functions.txt"
+        else:
+            filename = "eval_set.txt"
         file1 = open(filename, "r")
         lines = file1.readlines()
         Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')

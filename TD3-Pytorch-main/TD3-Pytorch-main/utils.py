@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def evaluate_policy(env, model, render, turns=1):
+def evaluate_policy(env, model, render, net_width, turns=1):
     scores = 0
     for j in range(turns):
         s, done, ep_r, steps = env.reset(), False, 0, 0
@@ -9,7 +9,7 @@ def evaluate_policy(env, model, render, turns=1):
         traj = np.array(s[0:2])
         while not done:
             # Take deterministic actions at test time
-            a = model.select_action(s)
+            a = model.select_action(s, net_width)
             s_prime, r, done, info = env.step(a)
             traj = np.append(traj,s_prime[0:2],axis=0)
 

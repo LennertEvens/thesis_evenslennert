@@ -7,14 +7,15 @@ from numpy import linalg as LA
 class GradDescentEnv(Env):
   def __init__(self):
     M = float(1e5)
-    print(test)
+
     self.function_nb = 0
 
     quadobj = Objective(self.function_nb)
     Q = quadobj.get_Q()
     eigs, _ = LA.eig(Q)
     max_step = 2./np.max(eigs)
-
+    np.savetxt("max_step.txt", np.array([max_step]), fmt='%4.15f', delimiter=' ') 
+    
     self.action_space = Box(low=0., high=max_step, shape=(1,), dtype=np.float64)
 
     self.observation_space = Box(low=-M, high=M, shape=(5,), dtype=np.float64)
@@ -36,9 +37,12 @@ class GradDescentEnv(Env):
     self.iterations += 1
 
     # Calculate reward
-    gamma = 0.5
-  
+    gamma = 0.9
+
     reward = (self.state[2] - new_func_val)**2 - self.iterations
+
+    if action[0]<0:
+      reward =  reward - 1e6
     self.state[2] = new_func_val
     self.state[3:5] = jac_eval
 
@@ -49,23 +53,26 @@ class GradDescentEnv(Env):
     # Terminal conditions
     max_iterations = 1e4
     tol = 1e-12
-    nb_functions = 10
+    nb_functions = 500
     if (self.iterations >= max_iterations):
-      print("Not within max iterations")
-      self.function_nb += 1
-      print(self.function_nb)
-      self.reset()
-      terminate = False
+      print("training not within max iterations")
+      if (self.function_nb == nb_functions - 1):
+        terminate = True
+        self.function_nb = 0
+        self.nb_passes += 1
+      else:
+        # print(self.function_nb)
+        self.function_nb += 1
+        self.reset()
+        terminate = False
 
     elif (LA.norm(self.state[0:2]) < tol):
       if (self.function_nb == nb_functions - 1):
         terminate = True
         self.function_nb = 0
         self.nb_passes += 1
-        print('number of passes:')
-        print(self.nb_passes)
       else:
-        print(self.function_nb)
+        # print(self.function_nb)
         self.function_nb += 1
         self.reset()
         terminate = False
@@ -99,7 +106,9 @@ class GradDescentEnv(Env):
     quadobj = Objective(self.function_nb)
     Q = quadobj.get_Q()
     eigs, _ = LA.eig(Q)
+    
     max_step = 2./np.max(eigs)
+    np.savetxt("max_step.txt", np.array([max_step]), fmt='%4.15f', delimiter=' ') 
     self.action_space = Box(low=0., high=max_step, shape=(1,), dtype=np.float64)
     return self.state
   

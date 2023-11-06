@@ -8,9 +8,11 @@ from datetime import datetime
 import argparse
 from utils import str2bool,Reward_adapter,evaluate_policy
 import gd_env
+import gd_env_eval
 from visualizer import visualize
 import matplotlib.pyplot as plt
 from numpy import linalg as LA
+import torch.nn.utils.prune as prune
 
 '''Hyperparameter Setting'''
 parser = argparse.ArgumentParser()
@@ -23,17 +25,17 @@ parser.add_argument('--ModelIdex', type=int, default=30000, help='which model to
 parser.add_argument('--seed', type=int, default=0, help='random seed')
 parser.add_argument('--update_every', type=int, default=50, help='training frequency')
 parser.add_argument('--Max_train_steps', type=int, default=5e6, help='Max training steps')
-parser.add_argument('--save_interval', type=int, default=1e3, help='Model saving interval, in steps.') #1e5
-parser.add_argument('--eval_interval', type=int, default=1e3, help='Model evaluating interval, in steps.')
+parser.add_argument('--save_interval', type=int, default=5e3, help='Model saving interval, in steps.') #1e5
+parser.add_argument('--eval_interval', type=int, default=5e3, help='Model evaluating interval, in steps.')
 
 parser.add_argument('--policy_delay_freq', type=int, default=1, help='Delay frequency of Policy Updating')
-parser.add_argument('--gamma', type=float, default=1.0, help='Discounted Factor')
+parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
 parser.add_argument('--net_width', type=int, default=64, help='Hidden net width') #256
 parser.add_argument('--a_lr', type=float, default=1e-6, help='Learning rate of actor')
 parser.add_argument('--c_lr', type=float, default=1e-6, help='Learning rate of critic')
-parser.add_argument('--batch_size', type=int, default=256, help='batch_size of training') #256
-parser.add_argument('--exp_noise', type=float, default=0.15, help='explore noise')
-parser.add_argument('--noise_decay', type=float, default=0.998, help='Decay rate of explore noise')
+parser.add_argument('--batch_size', type=int, default=16, help='batch_size of training') #256
+parser.add_argument('--exp_noise', type=float, default=0.15, help='explore noise')#0.15
+parser.add_argument('--noise_decay', type=float, default=0.999, help='Decay rate of explore noise')#0.998
 opt = parser.parse_args()
 print(opt)
 
@@ -54,7 +56,8 @@ def main():
     env_with_dw = [False, True, True, False, True, True, False]  # dw:die and win
     EnvIdex = opt.EnvIdex
     env = gym.make(EnvName[EnvIdex])
-    eval_env = gym.make(EnvName[EnvIdex])
+    # eval_env = gym.make(EnvName[EnvIdex])
+    eval_env = gym.make('gd_env_eval-v0')
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])   #remark: action space【-max,max】
@@ -72,7 +75,7 @@ def main():
     print("Random Seed: {}".format(random_seed))
     torch.manual_seed(random_seed)
     env.seed(random_seed)
-    # eval_env.seed(random_seed)
+    eval_env.seed(random_seed)
     np.random.seed(random_seed)
 
     if opt.write:
@@ -101,7 +104,8 @@ def main():
     replay_buffer = ReplayBuffer(state_dim, action_dim, max_size=int(1e6))
 
     if opt.render:
-        score, traj, _ = evaluate_policy(env, model, opt.render, turns=1)
+
+        score, traj, _ = evaluate_policy(env, model, opt.render, opt.net_width, turns=1)
         print('EnvName:', BrifEnvName[EnvIdex], 'score:', score)
         traj = np.reshape(traj,(int(np.size(traj,0)/2),2))
         np.savetxt("TD3_trajectory.txt", traj, fmt='%4.15f', delimiter=' ') 
@@ -115,7 +119,6 @@ def main():
         total_steps = 0
         while total_steps < opt.Max_train_steps:
             s, done, steps, ep_r = env.reset(), False, 0, 0
-
             '''Interact & train'''
             while not done:
                 steps += 1  #steps in one episode
@@ -123,6 +126,9 @@ def main():
                 if total_steps < start_steps:
                     a = env.action_space.sample()
                 else:
+                    file = open("max_step.txt", "r")
+                    line = file.readlines()
+                    max_action = float(np.fromstring(line[0], dtype=float, sep=' '))
                     a = (model.select_action(s) + np.random.normal(0, max_action * expl_noise, size=action_dim)
                          ).clip(-max_action, max_action)  # explore: deterministic actions + noise
                 s_prime, r, done, info = env.step(a)
@@ -143,11 +149,11 @@ def main():
                 if total_steps >= update_after and total_steps % opt.update_every == 0:
                     for j in range(opt.update_every):
                         model.train(replay_buffer)
-
+                
                 '''record & log'''
                 if total_steps % opt.eval_interval == 0:
                     expl_noise *= opt.noise_decay
-                    score, _, _ = evaluate_policy(eval_env, model, False)
+                    score, _, _ = evaluate_policy(eval_env, model, False, opt.net_width)
                     if opt.write:
                         writer.add_scalar('ep_r', score, global_step=total_steps)
                         writer.add_scalar('expl_noise', expl_noise, global_step=total_steps)
