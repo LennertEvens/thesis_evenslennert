@@ -2,9 +2,9 @@ from objective import Objective
 import numpy as np
 from numpy import linalg as LA
 
-def gradient_descent(X, function_nb, linesearch=False):
+def gradient_descent(X, function_nb, linesearch=False, stepsize=None):
     tol = 1e-12
-    max_iter = 1e3
+    max_iter = 1e4
     terminate = False
     traj = X
     quadobj = Objective(function_nb)
@@ -15,7 +15,10 @@ def gradient_descent(X, function_nb, linesearch=False):
     max_step = 2./np.max(eigs)
     step = gamma*max_step
     iter = 0
+    dimension = np.size(Q,1)
 
+    if stepsize is not None:
+        step = stepsize
     # linesearch parameters
     beta = 0.9
     gamma = 0.1
@@ -26,7 +29,7 @@ def gradient_descent(X, function_nb, linesearch=False):
         if linesearch:
             t = 1.
             grad = quadobj.get_jacval(X)
-            nb_fe += 2
+            nb_fe += dimension
             while quadobj.get_fval(X-t*grad) >= (quadobj.get_fval(X) - gamma*t*(LA.norm(grad)**2)):
                 nb_fe += 2
                 t = beta*t
@@ -38,7 +41,7 @@ def gradient_descent(X, function_nb, linesearch=False):
         X = X - step*quadobj.get_jacval(X)
         traj = np.append(traj,X,axis=0)
         iter += 1
-        nb_fe += 2
+        nb_fe += dimension
         fe_cache = np.append(fe_cache,nb_fe)
         if (LA.norm(X) < tol) or (iter == max_iter):
             terminate = True

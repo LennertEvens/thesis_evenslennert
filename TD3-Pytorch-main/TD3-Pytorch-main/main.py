@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import gym
+import gymnasium as gym
 from TD3 import TD3_Agent, ReplayBuffer, device
 from torch.utils.tensorboard import SummaryWriter
 import os, shutil
@@ -74,9 +74,10 @@ def main():
     random_seed = opt.seed
     print("Random Seed: {}".format(random_seed))
     torch.manual_seed(random_seed)
-    env.seed(random_seed)
-    eval_env.seed(random_seed)
+    # env.seed(random_seed)
+    # eval_env.seed(random_seed)
     np.random.seed(random_seed)
+    
 
     if opt.write:
         timenow = str(datetime.now())[0:-10]
@@ -100,12 +101,11 @@ def main():
     if not os.path.exists('model'): os.mkdir('model')
     model = TD3_Agent(**kwargs)
     if opt.Loadmodel: model.load(BrifEnvName[EnvIdex],opt.ModelIdex)
-
     replay_buffer = ReplayBuffer(state_dim, action_dim, max_size=int(1e6))
 
     if opt.render:
 
-        score, traj, _ = evaluate_policy(env, model, opt.render, opt.net_width, turns=1)
+        score, traj, _ = evaluate_policy(env, model, opt.render, turns=1)
         print('EnvName:', BrifEnvName[EnvIdex], 'score:', score)
         traj = np.reshape(traj,(int(np.size(traj,0)/2),2))
         np.savetxt("TD3_trajectory.txt", traj, fmt='%4.15f', delimiter=' ') 
@@ -129,9 +129,10 @@ def main():
                     file = open("max_step.txt", "r")
                     line = file.readlines()
                     max_action = float(np.fromstring(line[0], dtype=float, sep=' '))
-                    a = (model.select_action(s) + np.random.normal(0, max_action * expl_noise, size=action_dim)
+                    temp = model.select_action(s)
+                    a = (temp + np.random.normal(0, max_action * expl_noise, size=action_dim)
                          ).clip(-max_action, max_action)  # explore: deterministic actions + noise
-                s_prime, r, done, info = env.step(a)
+                s_prime, r, done, _, _ = env.step(a)
                 r = Reward_adapter(r, EnvIdex)
 
                 '''Avoid impacts caused by reaching max episode steps'''
@@ -153,7 +154,7 @@ def main():
                 '''record & log'''
                 if total_steps % opt.eval_interval == 0:
                     expl_noise *= opt.noise_decay
-                    score, _, _ = evaluate_policy(eval_env, model, False, opt.net_width)
+                    score, _, _ = evaluate_policy(eval_env, model, False)
                     if opt.write:
                         writer.add_scalar('ep_r', score, global_step=total_steps)
                         writer.add_scalar('expl_noise', expl_noise, global_step=total_steps)

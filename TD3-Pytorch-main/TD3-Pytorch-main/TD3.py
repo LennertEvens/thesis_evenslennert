@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torch.distributions import Beta,Normal
 import math
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -16,16 +17,13 @@ class Actor(nn.Module):
 		self.l1 = nn.Linear(state_dim, net_width)
 		self.l2 = nn.Linear(net_width, net_width)
 		self.l3 = nn.Linear(net_width, action_dim)
-	
+
 		self.maxaction = maxaction
 
 	def forward(self, state):
-		file = open("max_step.txt", "r")
-		line = file.readlines()
-		max_step = float(np.fromstring(line[0], dtype=float, sep=' '))
 		a = torch.tanh(self.l1(state))
 		a = torch.tanh(self.l2(a))
-		a = torch.tanh(self.l3(a)) * max_step
+		a = torch.tanh(self.l3(a)) * self.maxaction
 		return a
 
 
@@ -42,6 +40,7 @@ class Q_Critic(nn.Module):
 		self.l4 = nn.Linear(state_dim + action_dim, net_width)
 		self.l5 = nn.Linear(net_width, net_width)
 		self.l6 = nn.Linear(net_width, 1)
+
 
 	def forward(self, state, action):
 		sa = torch.cat([state, action], 1)
@@ -74,19 +73,19 @@ class TD3_Agent(object):
 		action_dim,
 		max_action,
 		gamma=0.99,
-		net_width=32, #128
-		a_lr=1e-6, #1e-4
-		c_lr=1e-6, #1e-4
-		batch_size = 16, #256
+		net_width=32,
+		a_lr=1e-6,
+		c_lr=1e-6,
+		batch_size = 16,
 		policy_delay_freq = 1
 	):
-		
+
 		self.actor = Actor(state_dim, action_dim, net_width, max_action).to(device)
-		self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=a_lr, weight_decay=1e-4)
+		self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=a_lr)
 		self.actor_target = copy.deepcopy(self.actor)
 
 		self.q_critic = Q_Critic(state_dim, action_dim, net_width).to(device)
-		self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=c_lr, weight_decay=1e-4)
+		self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=c_lr)
 		self.q_critic_target = copy.deepcopy(self.q_critic)
 
 		self.env_with_dw = env_with_dw
@@ -109,17 +108,11 @@ class TD3_Agent(object):
 	def train(self,replay_buffer):
 		self.delay_counter += 1
 		with torch.no_grad():
-
-			file = open("max_step.txt", "r")
-			line = file.readlines()
-			max_step = float(np.fromstring(line[0], dtype=float, sep=' '))
-			self.policy_noise = 0.2*max_step
-			self.noise_clip = 0.5*max_step
 			s, a, r, s_prime, dw_mask = replay_buffer.sample(self.batch_size)
 			noise = (torch.randn_like(a) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
 			smoothed_target_a = (
 					self.actor_target(s_prime) + noise  # Noisy on target action
-			).clamp(-max_step, max_step)
+			).clamp(-self.max_action, self.max_action)
 
 		# Compute the target Q value
 		target_Q1, target_Q2 = self.q_critic_target(s_prime, smoothed_target_a)
@@ -139,17 +132,15 @@ class TD3_Agent(object):
 		q_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
 
 		# Optimize the q_critic
-		self.q_critic_optimizer.zero_grad(set_to_none=True)
+		self.q_critic_optimizer.zero_grad()
 		q_loss.backward()
-		nn.utils.clip_grad_norm_(self.q_critic.parameters(), max_norm=1.0, norm_type=2)
 		self.q_critic_optimizer.step()
 
 		if self.delay_counter == self.delay_freq:
 			# Update Actor
 			a_loss = -self.q_critic.Q1(s,self.actor(s)).mean()
-			self.actor_optimizer.zero_grad(set_to_none=True)
+			self.actor_optimizer.zero_grad()
 			a_loss.backward()
-			nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0, norm_type=2)
 			self.actor_optimizer.step()
 
 			# Update the frozen target models

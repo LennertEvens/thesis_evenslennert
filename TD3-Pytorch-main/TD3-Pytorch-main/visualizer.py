@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from objective import Objective
 
-def visualize(data, data_ls, data_td3, function_nb):
+def visualize(data, data_ls, data_td3, function_nb) -> None:
     x1 = np.linspace(-10.0, 10.0, 100)
     x2 = np.linspace(-10.0, 10.0, 100)
     X1, X2 = np.meshgrid(x1, x2)

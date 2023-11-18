@@ -10,7 +10,7 @@ class Objective:
         file1 = open(filename, "r")
         lines = file1.readlines()
         Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
-        Q = np.reshape(Q,(2,2))
+        Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
 
         self.Q = Q
 
@@ -19,7 +19,7 @@ class Objective:
     
     def get_fval(self, X, visualize = False):
         if visualize:
-            var = np.size(self.Q,0)
+            var = 2
             X_rows = np.size(X,0)
             var_rows = int(X_rows/var)
             temp = np.zeros((100,var*100))
