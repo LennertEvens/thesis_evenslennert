@@ -15,12 +15,13 @@ class GradDescentEnv(gym.Env):
     quadobj = Objective(self.function_nb, self.mode)
     Q = quadobj.get_Q()
     eigs, _ = LA.eig(Q)
-    max_step = 2./np.max(eigs)
+    max_step = float(2./np.max(eigs))
     # np.savetxt("max_step.txt", np.array([max_step]), fmt='%4.15f', delimiter=' ') 
     
     self.dimension = np.size(Q,1)
 
-    self.action_space = spaces.Box(low=0., high=0.99*max_step, shape=(1,), dtype=np.float64)
+    # self.action_space = spaces.Box(low=0., high=0.99*max_step, shape=(1,), dtype=np.float64)
+    self.action_space = spaces.Box(low=0., high=2, shape=(1,), dtype=np.float64)
 
     self.observation_space = spaces.Box(low=-M, high=M, shape=(int(2*self.dimension+1),), dtype=np.float64)
 
@@ -32,7 +33,7 @@ class GradDescentEnv(gym.Env):
 
     self.nb_eval_func = 1
 
-    self.max_iterations = 3e4
+    self.max_iterations = 500
     
     self.tol = 1e-12
     
@@ -41,10 +42,17 @@ class GradDescentEnv(gym.Env):
     pen = 0.
     if action[0]<1e-15:
       print('warning!')
-      pen =  pen - 1e3
+      pen =  pen - 1e6
       action[0]=1e-15
     # Apply action
     quadobj = Objective(self.function_nb, self.mode)
+    Q = quadobj.get_Q()
+    eigs, _ = LA.eig(Q)
+    max_step = float(2./np.max(eigs))
+    if action[0] > max_step:
+      pen = pen - 1e6
+      action[0] = max_step
+
     self.state[0:self.dimension] = self.state[0:self.dimension] - action[0]*self.state[self.dimension+1:2*self.dimension+1]
     new_func_val = quadobj.get_fval(self.state[0:self.dimension])
     jac_eval = quadobj.get_jacval(self.state[0:self.dimension])
@@ -53,9 +61,10 @@ class GradDescentEnv(gym.Env):
     self.iterations += 1
 
     # Calculate reward
-    gamma = 0.9
+    gamma = 0.5
 
-    reward = (self.state[self.dimension] - new_func_val)**2 -self.iterations
+    reward = (self.state[self.dimension] - new_func_val) -self.iterations
+    # reward = (gamma**self.iterations)*(self.state[self.dimension] - new_func_val)
 
     self.state[self.dimension] = new_func_val
     self.state[self.dimension+1:2*self.dimension+1] = jac_eval
@@ -95,10 +104,10 @@ class GradDescentEnv(gym.Env):
 
     # Set placeholder for info
     info = {}
-    if terminate:
-      reward = 0.
-    else:
-      reward = -1.
+    # if terminate:
+    #   reward = 0.
+    # else:
+    #   reward = -1.
     reward = reward + pen
     # Return step information
     return self.state, reward, terminate, False, info

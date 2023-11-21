@@ -77,9 +77,10 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
     return func
 
-model = TD3("MlpPolicy", train_env, learning_rate=1e-6,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
-            train_freq=50,policy_delay=2,policy_kwargs=dict(net_arch=[64,64,64]))
+model = TD3("MlpPolicy", train_env, learning_rate=1e-8,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
+            train_freq=50,policy_delay=2,policy_kwargs=dict(net_arch=[256,256,256,256]))
+
 model.set_logger(new_logger)
-model.learn(total_timesteps=2e5, callback=eval_callback,progress_bar=True)
+model.learn(total_timesteps=1e6, callback=eval_callback,progress_bar=True)
 
 model.save("gd")

@@ -1,16 +1,36 @@
 import numpy as np
+from numpy import linalg as LA
 
 class Objective:
     def __init__(self, function_nb, mode='train'):
         
-        if mode == 'train':
-            filename = "functions.txt"
-        else:
+        # if mode == 'train':
+        #     filename = "functions.txt"
+
+        # else:
+        #     filename = "eval_set.txt"
+        # file1 = open(filename, "r")
+        # lines = file1.readlines()
+        # Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
+        # Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
+        if mode == 'test':
             filename = "eval_set.txt"
-        file1 = open(filename, "r")
-        lines = file1.readlines()
-        Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
-        Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
+            file1 = open(filename, "r")
+            lines = file1.readlines()
+            Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
+            Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
+        elif mode == 'eval':
+            filename = "eval_set.txt"
+            file1 = open(filename, "r")
+            lines = file1.readlines()
+            Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
+            Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
+
+            eig = 1 + 2*np.random.rand()
+            Q = np.array([[1., 0.],[0., eig]])
+        else:
+            eig = 1 + 2*np.random.rand()
+            Q = np.array([[1., 0.],[0., eig]])
 
         self.Q = Q
 
@@ -40,6 +60,12 @@ class Objective:
     def get_jacval(self, X):
         jacval = np.matmul(X,self.Q)
         return jacval
+    
+    def get_max_step(self):
+        eigs, _ = LA.eig(self.Q)
+        eigs = np.real(eigs)
+        max_step = float(2./np.max(eigs))
+        return max_step
 
 
 

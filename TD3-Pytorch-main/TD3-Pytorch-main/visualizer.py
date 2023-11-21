@@ -7,7 +7,7 @@ def visualize(data, data_ls, data_td3, function_nb) -> None:
     x2 = np.linspace(-10.0, 10.0, 100)
     X1, X2 = np.meshgrid(x1, x2)
     y = np.concatenate((X1,X2),axis=0)
-    quadobj = Objective(function_nb)
+    quadobj = Objective(function_nb,mode='test')
     Y = quadobj.get_fval(y, True)
 
     plt.subplot(1,3,1)

@@ -1,14 +1,12 @@
-import numpy as np
 import rbfopt
-import gradient_descent
+import numpy as np
+import os
+os.environ['LD_LIBRARY_PATH']='/volume1/scratch/rwang/pieter/lennert-evens/dist/lib'
+def obj_funct(x):
+  return x[0]*x[1] - x[2]
 
-X0 = 5*np.ones((2,1))
-def obj_funct(stepsize):
-  _, iter, _ = gradient_descent(X0,1,False,stepsize)
-  reward = -iter
-  return -reward
-
-bb = rbfopt.RbfoptUserBlackBox(1, 0.,2./5.536611758572813,np.array(['R']), obj_funct)
-settings = rbfopt.RbfoptSettings(max_evaluations=50, minlp_solver_path='../../../Bonmin',nlp_solver_path='../../../Ipopt')
+bb = rbfopt.RbfoptUserBlackBox(3, np.array([0] * 3), np.array([10] * 3),
+                               np.array(['R', 'I', 'R']), obj_funct)
+settings = rbfopt.RbfoptSettings(max_evaluations=50, minlp_solver_path='/volume1/scratch/rwang/pieter/lennert-evens/dist/bin/bonmin')
 alg = rbfopt.RbfoptAlgorithm(settings, bb)
 val, x, itercount, evalcount, fast_evalcount = alg.optimize()
