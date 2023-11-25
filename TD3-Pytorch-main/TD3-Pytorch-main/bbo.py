@@ -71,16 +71,20 @@ def black_box_opt(X:np.ndarray, quadobj:Objective) -> {np.ndarray, np.ndarray, n
         for i in range(np.size(traj,0)):
             func_eval[i,:] = quadobj.get_fval(traj[i,:])
         reward = 0.
-        gamma = 0.5
+        gamma = 0.9
         for i in range(np.size(traj,0)-1):
-            # reward += (gamma**(i+1))*(func_eval[i,:] - func_eval[i+1,:]) - np.size(traj,0)
+            # reward += (gamma**(i+1))*(func_eval[i,:] - func_eval[i+1,:])
             reward += (func_eval[i,:] - func_eval[i+1,:]) - np.size(traj,0)
         return reward
 
     def obj_funct(stepsize):
-        traj, iter, _, _ = gradient_descent(X,0,False,stepsize)
-        reward = reward_func(traj,iter)
-        return -reward
+        traj, iterations, fe_cache, _ = gradient_descent(X,0,False,stepsize)
+        file = open("bbo_it.txt", "r")
+        line = file.readlines()
+        total_fe = float(np.fromstring(line[0], dtype=float, sep=' '))
+        np.savetxt('bbo_it.txt', np.array([total_fe+fe_cache[-1]]), fmt='%4.15f')
+        reward = reward_func(traj,iterations)
+        return iterations
 
     # We define the parameters we want to optimize:
     optimization_problem_parameters = [

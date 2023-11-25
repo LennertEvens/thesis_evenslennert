@@ -16,7 +16,7 @@ def gradient_descent(X, function_nb, linesearch=False, stepsize=None, bbo=None):
     max_iter = 1e4
     terminate = False
     traj = X
-    quadobj = Objective(function_nb)
+    quadobj = Objective(function_nb,'test')
     Q = quadobj.get_Q()
     eigs, _ = LA.eig(Q)
     gamma = 0.50
@@ -51,7 +51,6 @@ def gradient_descent(X, function_nb, linesearch=False, stepsize=None, bbo=None):
 
             # exact linesearch
             step = exact_linesearch(X,quadobj)
-            nb_fe += 2
 
         if bbo:
             from bbo import black_box_opt

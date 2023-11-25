@@ -1,6 +1,6 @@
 import os
 import gymnasium as gym
-from stable_baselines3 import TD3, SAC, DDPG, HerReplayBuffer
+from stable_baselines3 import TD3, SAC, DDPG, HerReplayBuffer, PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
@@ -33,9 +33,9 @@ eval_log_dir = "eval_logs/"
 os.makedirs(eval_log_dir, exist_ok=True)
 
 # Initialize a vectorized training environment with default parameters
-train_env = gym.make(env_id, mode = 'train')
+train_env = gym.make(env_id)
 train_env = DummyVecEnv([lambda: train_env])
-eval_env = gym.make(env_id, mode='eval')
+eval_env = gym.make(env_id,mode='eval')
 eval_env = DummyVecEnv([lambda: eval_env])
 
 # train_env = make_vec_env(env_id, n_envs=n_training_envs, seed=0, mode='train')
@@ -49,7 +49,7 @@ eval_env = DummyVecEnv([lambda: eval_env])
 # eval_freq calls to train_env.step(), thus it will be evaluated every
 # (eval_freq * n_envs) training steps. See EvalCallback doc for more information.
 eval_callback = EvalCallback(eval_env, best_model_save_path=eval_log_dir,
-                              log_path=eval_log_dir, eval_freq=max(2000 // n_training_envs, 1),
+                              log_path=eval_log_dir, eval_freq=max(10000 // n_training_envs, 1),
                               n_eval_episodes=1, deterministic=True,
                               render=False)
 
@@ -77,10 +77,10 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
     return func
 
-model = TD3("MlpPolicy", train_env, learning_rate=1e-8,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
-            train_freq=50,policy_delay=2,policy_kwargs=dict(net_arch=[256,256,256,256]))
+model = SAC("MlpPolicy", train_env, learning_rate=1e-2,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
+            train_freq=50,policy_kwargs=dict(net_arch=[256,256,256]))
 
 model.set_logger(new_logger)
-model.learn(total_timesteps=1e6, callback=eval_callback,progress_bar=True)
+model.learn(total_timesteps=3e5, callback=eval_callback,progress_bar=True)
 
 model.save("gd")

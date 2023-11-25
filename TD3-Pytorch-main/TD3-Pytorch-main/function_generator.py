@@ -1,5 +1,5 @@
 import numpy as np
-mode = 1
+mode = 2
 nb_train = 100
 nb_eval = 10
 dimension = 2
@@ -19,9 +19,7 @@ def generate_Q(alpha, a, dimension):
     U1 = np.eye(dimension)
     # U2 = np.array([[np.cos(beta), -np.sin(beta)], [np.sin(beta), np.cos(beta)]])
     # Q = np.array([[1, 0],[0, 1+(10-1)*np.random.rand()]])
-    dia = 8*np.random.rand(1,dimension)
     Q = np.array([[1, 0],[0, a]])
-    Q = np.diag(dia[0])
     Q = np.matmul(U1,Q)
     Q = np.matmul(Q,np.transpose(U1))
     return Q

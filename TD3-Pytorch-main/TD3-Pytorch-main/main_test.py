@@ -5,13 +5,12 @@ from numpy import linalg as LA
 from visualizer import visualize
 import matplotlib.pyplot as plt
 from objective import Objective
-from stable_baselines3 import TD3
+from stable_baselines3 import TD3, SAC
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from bbo import black_box_opt
 import gymnasium as gym
 import gd_env
-
 function_nb = 0
 
 quadobj = Objective(function_nb,mode='test')
@@ -27,8 +26,13 @@ traj = np.reshape(traj,(int(np.size(traj)/dimension),dimension))
 traj_ls,iter_ls, fe_cache_ls, ls_step_cache = gradient_descent(X,function_nb,True)
 traj_ls = np.reshape(traj_ls,(int(np.size(traj_ls)/dimension),dimension))
 
+np.savetxt('bbo_it.txt', np.array([0.]), fmt='%4.15f') 
 traj_bbo, iter_bbo, fe_cache_bbo, bbo_step_cache = gradient_descent(X,function_nb,False,None,True)
 traj_bbo = np.reshape(traj_bbo,(int(np.size(traj_bbo)/dimension),dimension))
+file = open("bbo_it.txt", "r")
+line = file.readlines()
+total_fe = float(np.fromstring(line[0], dtype=float, sep=' '))
+np.savetxt('bbo_it.txt', np.array([total_fe+fe_cache_bbo[-1]]), fmt='%4.15f') 
 
 # filename = "TD3_data.txt"
 # file1 = open(filename, "r")
@@ -53,10 +57,10 @@ traj_bbo = np.reshape(traj_bbo,(int(np.size(traj_bbo)/dimension),dimension))
 # TD3_traj = np.reshape(TD3_traj,(int(np.size(TD3_traj)/2),2))
 
 # env = make_vec_env("gd_env-v0", n_envs=1, seed=0, mode='test')
-env = gym.make("gd_env-v0", mode='test')
+env = gym.make("gd_env-v0",mode='test')
 env = DummyVecEnv([lambda: env])
 env.reset()
-model = TD3.load("gd",env=env)
+model = SAC.load("gd",env=env)
 
 obs = env.reset()
 obs_ = obs[0]
@@ -68,7 +72,7 @@ fe_cache_td3 = []
 fe_td3 = 0.
 while not done:
     action, _states = model.predict(obs, deterministic=True)
-    action_cache = np.append(action_cache,action)
+    action_cache = np.append(action_cache,10**action)
     obs, rewards, done, info = env.step(action)
     obs_ = obs[0]
     TD3_traj = np.append(TD3_traj,obs_[0:dimension],axis=0)
@@ -80,7 +84,7 @@ TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension]
 TD3_data = np.append(np.linspace(1,np.size(TD3_traj,0),np.size(TD3_traj,0)),LA.norm(TD3_traj,axis=1),axis = 0)
 TD3_data = np.reshape(TD3_data,(int(np.size(TD3_data)/2),2),order='F')
 
-visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], function_nb)
+visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], traj_bbo[:,0:2], function_nb)
 plt.clf()
 plt.semilogy(np.linspace(1,np.size(traj,0),np.size(traj,0)),LA.norm(traj,axis=1),label='GD')
 plt.semilogy(np.linspace(1,np.size(traj_ls,0),np.size(traj_ls,0)),LA.norm(traj_ls,axis=1),label='LS')
@@ -125,7 +129,7 @@ plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
 plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
 plt.plot(ls_step_cache,label='LS')
 plt.plot(bbo_step_cache,label='BBO')
-plt.plot(ls_td3_step_cache,'y',label='LS_TD3')
+# plt.plot(ls_td3_step_cache,'y',label='LS_TD3')
 plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
 
 plt.xlabel('iterations')
