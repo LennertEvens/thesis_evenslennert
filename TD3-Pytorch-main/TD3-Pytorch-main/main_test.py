@@ -26,13 +26,13 @@ traj = np.reshape(traj,(int(np.size(traj)/dimension),dimension))
 traj_ls,iter_ls, fe_cache_ls, ls_step_cache = gradient_descent(X,function_nb,True)
 traj_ls = np.reshape(traj_ls,(int(np.size(traj_ls)/dimension),dimension))
 
-np.savetxt('bbo_it.txt', np.array([0.]), fmt='%4.15f') 
-traj_bbo, iter_bbo, fe_cache_bbo, bbo_step_cache = gradient_descent(X,function_nb,False,None,True)
-traj_bbo = np.reshape(traj_bbo,(int(np.size(traj_bbo)/dimension),dimension))
-file = open("bbo_it.txt", "r")
-line = file.readlines()
-total_fe = float(np.fromstring(line[0], dtype=float, sep=' '))
-np.savetxt('bbo_it.txt', np.array([total_fe+fe_cache_bbo[-1]]), fmt='%4.15f') 
+# np.savetxt('bbo_it.txt', np.array([0.]), fmt='%4.15f') 
+# traj_bbo, iter_bbo, fe_cache_bbo, bbo_step_cache = gradient_descent(X,function_nb,False,None,True)
+# traj_bbo = np.reshape(traj_bbo,(int(np.size(traj_bbo)/dimension),dimension))
+# file = open("bbo_it.txt", "r")
+# line = file.readlines()
+# total_fe = float(np.fromstring(line[0], dtype=float, sep=' '))
+# np.savetxt('bbo_it.txt', np.array([total_fe+fe_cache_bbo[-1]]), fmt='%4.15f') 
 
 # filename = "TD3_data.txt"
 # file1 = open(filename, "r")
@@ -64,6 +64,9 @@ model = SAC.load("gd",env=env)
 
 obs = env.reset()
 obs_ = obs[0]
+signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
+obs_ = 10**obs_[0:int(2*dimension+1)]
+obs_ = np.multiply(signs,obs_)
 done = False
 TD3_traj = np.array(obs_[0:dimension])
 action_cache = []
@@ -75,8 +78,11 @@ while not done:
     action_cache = np.append(action_cache,10**action)
     obs, rewards, done, info = env.step(action)
     obs_ = obs[0]
+    signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
+    obs_ = 10**obs_[0:int(2*dimension+1)]
+    obs_ = np.multiply(signs,obs_)
     TD3_traj = np.append(TD3_traj,obs_[0:dimension],axis=0)
-    fe_td3 += dimension+1
+    fe_td3 += 2
     fe_cache_td3 = np.append(fe_cache_td3,fe_td3)
 
 TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension],0)/dimension),dimension))
@@ -84,18 +90,27 @@ TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension]
 TD3_data = np.append(np.linspace(1,np.size(TD3_traj,0),np.size(TD3_traj,0)),LA.norm(TD3_traj,axis=1),axis = 0)
 TD3_data = np.reshape(TD3_data,(int(np.size(TD3_data)/2),2),order='F')
 
-visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], traj_bbo[:,0:2], function_nb)
+visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], function_nb)
 plt.clf()
 plt.semilogy(np.linspace(1,np.size(traj,0),np.size(traj,0)),LA.norm(traj,axis=1),label='GD')
 plt.semilogy(np.linspace(1,np.size(traj_ls,0),np.size(traj_ls,0)),LA.norm(traj_ls,axis=1),label='LS')
 plt.semilogy(TD3_data[0:,0], TD3_data[0:,1],'r--',label='TD3')
-plt.semilogy(np.linspace(1,np.size(traj_bbo,0),np.size(traj_bbo,0)),LA.norm(traj_bbo,axis=1),label='BBO')
+# plt.semilogy(np.linspace(1,np.size(traj_bbo,0),np.size(traj_bbo,0)),LA.norm(traj_bbo,axis=1),label='BBO')
 plt.xlabel('iterations')
 plt.ylabel('||abs error||')
 plt.legend(loc="upper right")
 plt.grid()
 # plt.show()
 plt.savefig('convergence.png')
+
+plt.clf()
+plt.semilogy(TD3_data[0:,0], TD3_data[0:,1],'r--',label='TD3')
+plt.xlabel('iterations')
+plt.ylabel('||abs error||')
+plt.legend(loc="upper right")
+plt.grid()
+# plt.show()
+plt.savefig('convergence_td3.png')
 
 # fe_cache_td3 = ((dimension+1)/dimension)*fe_cache
 plt.clf()
@@ -111,6 +126,14 @@ plt.grid()
 # plt.show()
 plt.savefig('function_eval.png')
 
+plt.clf()
+plt.semilogy(fe_cache_td3, LA.norm(TD3_traj,axis=1),'r--',label='TD3')
+plt.xlabel('function evaluations')
+plt.ylabel('||abs error||')
+plt.legend(loc="upper right")
+plt.grid()
+# plt.show()
+plt.savefig('function_eval_td3.png')
 
 
 ls_td3_step_cache = []
@@ -125,16 +148,26 @@ plt.rcParams.update({
     "font.sans-serif": "Helvetica",
 })
 plt.clf()
-plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
-plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
+
+# plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
 plt.plot(ls_step_cache,label='LS')
-plt.plot(bbo_step_cache,label='BBO')
+# plt.plot(bbo_step_cache,label='BBO')
 # plt.plot(ls_td3_step_cache,'y',label='LS_TD3')
-plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
+# plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
 
 plt.xlabel('iterations')
 plt.ylabel('action')
 plt.legend(loc="upper right")
 plt.grid()
 plt.savefig('actions.png')
+
+plt.clf()
+plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
+plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
+plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
+plt.xlabel('iterations')
+plt.ylabel('action')
+plt.legend(loc="upper right")
+plt.grid()
+plt.savefig('actions_td3.png')
 

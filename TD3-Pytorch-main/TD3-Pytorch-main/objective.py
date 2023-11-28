@@ -14,9 +14,11 @@ class Objective:
         # Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
         # Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
         if mode == 'test':
-            Q = np.array([[1., 0.],[0., 10.]])
+            # Q = np.array([[1., 0.],[0., 10000.]])
             # dia = np.array([1., 8.0, 4.0, 7.5, 5.2, 10., 4.8, 3.2, 8.3, 6.8])
             # Q = np.diagflat(dia)
+            eig = 1 + (100-1)*np.random.rand(100,1)
+            Q = np.diagflat(eig)
             # filename = "test_func.txt"
             # file1 = open(filename, "r")
             # lines = file1.readlines()
@@ -31,12 +33,12 @@ class Objective:
             # lines = file1.readlines()
             # Q = np.fromstring(lines[function_nb], dtype=float, sep=' ')
             # Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
-            # eig = 1 + (10-1)*np.random.rand(10,1)
-            # Q = np.diagflat(eig)
+            eig = 1 + (100-1)*np.random.rand(100,1)
+            Q = np.diagflat(eig)
 
             # dia = np.array([1., 8.0, 4.0, 7.5, 5.2, 10., 4.8, 3.2, 8.3, 6.8])
             # Q = np.diag(dia)
-            Q = np.array([[1., 0.],[0., 10.]])
+            # Q = np.array([[1., 0.],[0., 10000.]])
             # filename = "rotation.txt"
             # file1 = open(filename, "r")
             # lines = file1.readlines()
@@ -48,11 +50,11 @@ class Objective:
         else:
             # eig = 1 + (10-1)*np.random.rand()
             # Q = np.array([[1., 0.],[0., eig]])
-            # eig = 1 + (10-1)*np.random.rand(10,1)
-            # Q = np.diagflat(eig)
+            eig = 1 + (100-1)*np.random.rand(100,1)
+            Q = np.diagflat(eig)
             # dia = np.array([1., 8.0, 4.0, 7.5, 5.2, 10., 4.8, 3.2, 8.3, 6.8])
             # Q = np.diag(dia)
-            Q = np.array([[1., 0.],[0., 10.]])
+            # Q = np.array([[1., 0.],[0., 10000.]])
             # filename = "rotation.txt"
             # file1 = open(filename, "r")
             # lines = file1.readlines()

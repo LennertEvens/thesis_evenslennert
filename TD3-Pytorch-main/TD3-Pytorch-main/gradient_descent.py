@@ -6,6 +6,11 @@ def gradient_descent_step(X:np.ndarray, grad:np.ndarray, step:float) -> np.ndarr
     X = X - step*grad
     return X
 
+def trunc_gradient_descent(X:np.ndarray, grad:np.ndarray, step:float, iterations: int) -> np.ndarray:
+    for i in range(iterations-1):
+        X = gradient_descent_step(X,grad,step)
+    return X
+
 def exact_linesearch(X:np.ndarray, quadobj:Objective) -> float:
     grad = quadobj.get_jacval(X)
     Q = quadobj.get_Q()
@@ -60,7 +65,7 @@ def gradient_descent(X, function_nb, linesearch=False, stepsize=None, bbo=None):
         X = gradient_descent_step(X,grad,step)
         traj = np.append(traj,X,axis=0)
         iter += 1
-        nb_fe += dimension
+        nb_fe += 1
         fe_cache = np.append(fe_cache,nb_fe)
         if (LA.norm(X) < tol) or (iter == max_iter):
             terminate = True

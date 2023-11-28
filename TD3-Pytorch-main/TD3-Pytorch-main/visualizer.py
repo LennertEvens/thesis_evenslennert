@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from objective import Objective
 
-def visualize(data, data_ls, data_td3, data_bbo,function_nb) -> None:
+def visualize(data, data_ls, data_td3,function_nb) -> None:
     x1 = np.linspace(-10.0, 10.0, 100)
     x2 = np.linspace(-10.0, 10.0, 100)
     X1, X2 = np.meshgrid(x1, x2)
@@ -50,7 +50,7 @@ def visualize(data, data_ls, data_td3, data_bbo,function_nb) -> None:
     cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
     plt.clabel(cp, inline=1, fontsize=10)
     cp = plt.contourf(X1, X2, Y, )
-    plt.plot(data_bbo[:,0],data_bbo[:,1],'r-')
+    # plt.plot(data_bbo[:,0],data_bbo[:,1],'r-')
     plt.xlabel('X1')
     plt.ylabel('X2')
     plt.title('BBO')
