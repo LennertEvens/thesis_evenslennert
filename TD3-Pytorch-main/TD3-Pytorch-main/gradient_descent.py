@@ -17,7 +17,7 @@ def exact_linesearch(X:np.ndarray, quadobj:Objective) -> float:
     return np.matmul(grad,np.transpose(grad))/(np.matmul(np.matmul(grad,Q),np.transpose(grad)))
 
 def gradient_descent(X, function_nb, linesearch=False, stepsize=None, bbo=None):
-    tol = 1e-12
+    tol = 1e-8
     max_iter = 1e4
     terminate = False
     traj = X
@@ -67,7 +67,7 @@ def gradient_descent(X, function_nb, linesearch=False, stepsize=None, bbo=None):
         iter += 1
         nb_fe += 1
         fe_cache = np.append(fe_cache,nb_fe)
-        if (LA.norm(X) < tol) or (iter == max_iter):
+        if (LA.norm(quadobj.get_jacval(X)) < tol) or (iter == max_iter):
             terminate = True
     
     return traj, iter, fe_cache, step_cache

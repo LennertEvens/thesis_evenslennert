@@ -7,12 +7,12 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.logger import configure, read_csv
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
+from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise, NormalActionNoise
 from typing import Callable
 import gd_env
-import gd_env_eval
 import torch
 import subprocess
+import numpy as np
 # CUDA
 print(f"Is CUDA supported by this system? {torch.cuda.is_available()}")
 print(f"CUDA version: {torch.version.cuda}")
@@ -50,7 +50,7 @@ eval_env = DummyVecEnv([lambda: eval_env])
 # (eval_freq * n_envs) training steps. See EvalCallback doc for more information.
 eval_callback = EvalCallback(eval_env, best_model_save_path=eval_log_dir,
                               log_path=eval_log_dir, eval_freq=max(10000 // n_training_envs, 1),
-                              n_eval_episodes=100, deterministic=True,
+                              n_eval_episodes=1, deterministic=True,
                               render=False)
 
 # set up logger
@@ -76,11 +76,11 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
         return progress_remaining * initial_value
 
     return func
-
+action_noise = NormalActionNoise(np.array([0.]),np.array([0.15]))
 model = SAC("MlpPolicy", train_env, learning_rate=1e-2,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
-            train_freq=50,policy_kwargs=dict(net_arch=[128,128]))
+            train_freq=50,policy_kwargs=dict(net_arch=[128,128,128]))
 
 model.set_logger(new_logger)
-model.learn(total_timesteps=200e3, callback=eval_callback,progress_bar=True)
+model.learn(total_timesteps=2e6, callback=eval_callback,progress_bar=True)
 
 model.save("gd")

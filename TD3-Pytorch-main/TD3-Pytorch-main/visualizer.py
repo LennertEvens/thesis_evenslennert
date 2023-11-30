@@ -2,15 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from objective import Objective
 
-def visualize(data, data_ls, data_td3,function_nb) -> None:
+def visualize(data, data_ls, data_td3,quadobj) -> None:
     x1 = np.linspace(-10.0, 10.0, 100)
     x2 = np.linspace(-10.0, 10.0, 100)
     X1, X2 = np.meshgrid(x1, x2)
     y = np.concatenate((X1,X2),axis=0)
-    quadobj = Objective(function_nb,mode='test')
     Y = quadobj.get_fval(y, True)
 
-    plt.subplot(1,2,1)
+    plt.subplot(1,3,1)
     cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
     plt.clabel(cp, inline=1, fontsize=10)
     cp = plt.contourf(X1, X2, Y, )
@@ -22,7 +21,7 @@ def visualize(data, data_ls, data_td3,function_nb) -> None:
     ax.set_aspect('equal', adjustable='box')
     
 
-    plt.subplot(1,2,2)
+    plt.subplot(1,3,2)
     cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
     plt.clabel(cp, inline=1, fontsize=10)
     cp = plt.contourf(X1, X2, Y, )
@@ -32,10 +31,8 @@ def visualize(data, data_ls, data_td3,function_nb) -> None:
     plt.title("Linesearch")
     ax = plt.gca()
     ax.set_aspect('equal', adjustable='box')  
-    plt.savefig('trajectories1.png')
 
-    plt.clf()
-    plt.subplot(1,2,1)
+    plt.subplot(1,3,3)
     cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
     plt.clabel(cp, inline=1, fontsize=10)
     cp = plt.contourf(X1, X2, Y, )
@@ -45,18 +42,21 @@ def visualize(data, data_ls, data_td3,function_nb) -> None:
     plt.title('TD3')
     ax = plt.gca()
     ax.set_aspect('equal', adjustable='box')
+    plt.savefig('trajectories1.png')
 
-    plt.subplot(1,2,2)
-    cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
-    plt.clabel(cp, inline=1, fontsize=10)
-    cp = plt.contourf(X1, X2, Y, )
-    # plt.plot(data_bbo[:,0],data_bbo[:,1],'r-')
-    plt.xlabel('X1')
-    plt.ylabel('X2')
-    plt.title('BBO')
-    ax = plt.gca()
-    ax.set_aspect('equal', adjustable='box')
-    # plt.show()
-    plt.savefig('trajectories2.png')
+
+
+    # plt.subplot(1,2,2)
+    # cp = plt.contour(X1, X2, Y, colors='black', linestyles='dashed', linewidths=1)
+    # plt.clabel(cp, inline=1, fontsize=10)
+    # cp = plt.contourf(X1, X2, Y, )
+    # # plt.plot(data_bbo[:,0],data_bbo[:,1],'r-')
+    # plt.xlabel('X1')
+    # plt.ylabel('X2')
+    # plt.title('BBO')
+    # ax = plt.gca()
+    # ax.set_aspect('equal', adjustable='box')
+    # # plt.show()
+    # plt.savefig('trajectories2.png')
     
 

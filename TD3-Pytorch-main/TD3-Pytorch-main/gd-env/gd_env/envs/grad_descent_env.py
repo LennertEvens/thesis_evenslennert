@@ -14,16 +14,17 @@ class GradDescentEnv(gym.Env):
     Q = quadobj.get_Q()
     
     self.dimension = np.size(Q,1)
+    
 
     self.action_space = spaces.Box(low=np.log10(1./10.), high=np.log10(2./1.), shape=(1,), dtype=np.float64)
-    #self.action_space = spaces.Box(low=1./10., high=2./1., shape=(1,), dtype=np.float64)
+    # self.action_space = spaces.Box(low=1./10., high=2./1., shape=(1,), dtype=np.float64)
 
     self.observation_space = spaces.Box(low=-M, high=M, shape=(2*int(2*self.dimension+1),), dtype=np.float64)
     self.iterations = 0
 
     self.max_iterations = 1e3
     
-    self.tol = 1e-12
+    self.tol = 1e-8
     
 
   def step(self,action):
@@ -51,11 +52,13 @@ class GradDescentEnv(gym.Env):
     
     # Calculate reward
     gamma = 0.99
-    reward = (self.state[self.dimension] - new_func_val)**2 - self.iterations
-    #reward = (gamma**self.iterations)*(self.state[self.dimension] - new_func_val)
-    # reward = -LA.norm(jac_eval)**2
-    # if (new_func_val >= self.state[self.dimension]) and (self.mode == 'train'):
-    #   pen = pen - 1e6
+
+    # reward = -np.log10(LA.norm(self.state[self.dimension+1:2*self.dimension+1])**2) + gamma*(-np.log10(LA.norm(jac_eval)**2)+np.log10(LA.norm(self.state[self.dimension+1:2*self.dimension+1])**2))
+    # reward = (self.state[self.dimension] - new_func_val)**2 - self.iterations
+    # reward = (gamma**self.iterations)*(self.state[self.dimension] - new_func_val)
+    # reward = -np.log10(LA.norm(jac_eval)**2)
+    if (new_func_val >= self.state[self.dimension]) and (self.mode == 'train'):
+      pen = pen - 1e6
     # reward = gamma*(0.9*new_func_val-self.state[self.dimension])
 
     self.state[self.dimension] = new_func_val
@@ -86,17 +89,17 @@ class GradDescentEnv(gym.Env):
       reward = -1.
 
     reward = reward + pen
+    
     signs = np.sign(self.state)
     for i in range(int(2*self.dimension+1)):
-      if self.state[i] < 1e-15:
+      if abs(self.state[i]) < 1e-15:
         self.state[i] = 1e-15
-
     self.state = np.log10(abs(self.state))
     self.state = np.append(self.state,signs)
 
     # Return step information
     
-
+    action[0] = np.log10(action[0])
     return self.state, reward, terminate, False, info
   
   def render(self):
@@ -116,7 +119,11 @@ class GradDescentEnv(gym.Env):
     jac_eval = quadobj.get_jacval(ini)
     self.state = np.append(ini,func_val)
     self.state = np.append(self.state,jac_eval)
+
     signs = np.sign(self.state)
+    for i in range(int(2*self.dimension+1)):
+      if abs(self.state[i]) < 1e-15:
+        self.state[i] = 1e-15
     self.state = np.log10(abs(self.state))
     self.state = np.append(self.state,signs)
 

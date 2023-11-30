@@ -1,4 +1,4 @@
-from gradient_descent import gradient_descent, exact_linesearch
+from gradient_descent import gradient_descent, exact_linesearch, gradient_descent_step
 import numpy as np
 from benderopt import minimize
 from numpy import linalg as LA
@@ -59,38 +59,47 @@ traj_ls = np.reshape(traj_ls,(int(np.size(traj_ls)/dimension),dimension))
 # env = make_vec_env("gd_env-v0", n_envs=1, seed=0, mode='test')
 env = gym.make("gd_env-v0",mode='test')
 env = DummyVecEnv([lambda: env])
-env.reset()
 model = SAC.load("gd",env=env)
-
 obs = env.reset()
 obs_ = obs[0]
 signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
 obs_ = 10**obs_[0:int(2*dimension+1)]
 obs_ = np.multiply(signs,obs_)
+
+# obs_ = ini = 5*np.ones((1,dimension))
 done = False
 TD3_traj = np.array(obs_[0:dimension])
 action_cache = []
 action_cache_bb = []
 fe_cache_td3 = []
 fe_td3 = 0.
+
 while not done:
     action, _states = model.predict(obs, deterministic=True)
+
     action_cache = np.append(action_cache,10**action)
+
+    # grad = quadobj.get_jacval(obs_)
+    # obs_ = gradient_descent_step(obs_,grad,10**action)
     obs, rewards, done, info = env.step(action)
+
     obs_ = obs[0]
     signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
     obs_ = 10**obs_[0:int(2*dimension+1)]
-    obs_ = np.multiply(signs,obs_)
+
     TD3_traj = np.append(TD3_traj,obs_[0:dimension],axis=0)
     fe_td3 += 2
     fe_cache_td3 = np.append(fe_cache_td3,fe_td3)
+    # jac_eval = quadobj.get_jacval(obs_)
+    # if LA.norm(jac_eval) < 1e-12:
+    #     done = True
 
 TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension],0)/dimension),dimension))
-
+np.savetxt('test.txt', TD3_traj, fmt='%4.15f', delimiter=' ') 
 TD3_data = np.append(np.linspace(1,np.size(TD3_traj,0),np.size(TD3_traj,0)),LA.norm(TD3_traj,axis=1),axis = 0)
 TD3_data = np.reshape(TD3_data,(int(np.size(TD3_data)/2),2),order='F')
 
-visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], function_nb)
+visualize(traj[:,0:2], traj_ls[:,0:2], TD3_traj[:,0:2], quadobj)
 plt.clf()
 plt.semilogy(np.linspace(1,np.size(traj,0),np.size(traj,0)),LA.norm(traj,axis=1),label='GD')
 plt.semilogy(np.linspace(1,np.size(traj_ls,0),np.size(traj_ls,0)),LA.norm(traj_ls,axis=1),label='LS')
@@ -102,15 +111,6 @@ plt.legend(loc="upper right")
 plt.grid()
 # plt.show()
 plt.savefig('convergence.png')
-
-plt.clf()
-plt.semilogy(TD3_data[0:,0], TD3_data[0:,1],'r--',label='TD3')
-plt.xlabel('iterations')
-plt.ylabel('||abs error||')
-plt.legend(loc="upper right")
-plt.grid()
-# plt.show()
-plt.savefig('convergence_td3.png')
 
 # fe_cache_td3 = ((dimension+1)/dimension)*fe_cache
 plt.clf()
@@ -126,14 +126,6 @@ plt.grid()
 # plt.show()
 plt.savefig('function_eval.png')
 
-plt.clf()
-plt.semilogy(fe_cache_td3, LA.norm(TD3_traj,axis=1),'r--',label='TD3')
-plt.xlabel('function evaluations')
-plt.ylabel('||abs error||')
-plt.legend(loc="upper right")
-plt.grid()
-# plt.show()
-plt.savefig('function_eval_td3.png')
 
 
 ls_td3_step_cache = []
@@ -151,6 +143,9 @@ plt.clf()
 
 # plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
 plt.plot(ls_step_cache,label='LS')
+plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
+plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
+plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
 # plt.plot(bbo_step_cache,label='BBO')
 # plt.plot(ls_td3_step_cache,'y',label='LS_TD3')
 # plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
@@ -160,14 +155,4 @@ plt.ylabel('action')
 plt.legend(loc="upper right")
 plt.grid()
 plt.savefig('actions.png')
-
-plt.clf()
-plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
-plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
-plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
-plt.xlabel('iterations')
-plt.ylabel('action')
-plt.legend(loc="upper right")
-plt.grid()
-plt.savefig('actions_td3.png')
 
