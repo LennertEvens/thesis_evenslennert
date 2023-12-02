@@ -82,7 +82,7 @@ while not done:
     # grad = quadobj.get_jacval(obs_)
     # obs_ = gradient_descent_step(obs_,grad,10**action)
     obs, rewards, done, info = env.step(action)
-
+    print(action)
     obs_ = obs[0]
     signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
     obs_ = 10**obs_[0:int(2*dimension+1)]

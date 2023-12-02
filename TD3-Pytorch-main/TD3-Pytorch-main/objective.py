@@ -54,7 +54,7 @@ class Objective:
         else:
             # eig = 1 + (10-1)*np.random.rand()
             # Q = np.array([[1., 0.],[0., eig]])
-            eig = 1 + (10-1)*np.random.rand(10,1)
+            eig = 1 + (10-1)*np.random.rand(100,1)
             Q = np.diagflat(eig)
             # dia = np.array([1., 8.0, 4.0, 7.5, 5.2, 10., 4.8, 3.2, 8.3, 6.8])
             # Q = np.diag(dia)

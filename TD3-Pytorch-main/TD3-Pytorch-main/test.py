@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-eig = 1 + (10-1)*np.random.rand(10,1)
+eig = 1 + (10-1)*np.random.rand(100,1)
 Q = np.diagflat(eig)
 Q_all = np.reshape(Q,(1,int(np.size(Q)/1)))
 np.savetxt("test_func.txt", Q_all, fmt='%4.15f', delimiter=' ') 

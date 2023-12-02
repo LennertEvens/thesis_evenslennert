@@ -16,13 +16,14 @@ class GradDescentEnv(gym.Env):
     self.dimension = np.size(Q,1)
     
 
-    self.action_space = spaces.Box(low=np.log10(1./10.), high=np.log10(2./1.), shape=(1,), dtype=np.float64)
+    # self.action_space = spaces.Box(low=np.log10(1./10.), high=np.log10(2./1.), shape=(1,), dtype=np.float64)
     # self.action_space = spaces.Box(low=1./10., high=2./1., shape=(1,), dtype=np.float64)
+    self.action_space = spaces.Box(low=-1., high=1., shape=(1,), dtype=np.float64)
 
     self.observation_space = spaces.Box(low=-M, high=M, shape=(2*int(2*self.dimension+1),), dtype=np.float64)
     self.iterations = 0
 
-    self.max_iterations = 1e3
+    self.max_iterations = 3e3
     
     self.tol = 1e-8
     
@@ -32,6 +33,8 @@ class GradDescentEnv(gym.Env):
     signs = self.state[int(2*self.dimension+1):2*int(2*self.dimension+1)]
     self.state = 10**self.state[0:int(2*self.dimension+1)]
     self.state = np.multiply(signs,self.state)
+
+    action[0] = 0.5*(action[0]+1)*(np.log10(2.)+1.) - 1.
     action[0] = 10**action[0]
 
     pen = 0.
@@ -78,8 +81,11 @@ class GradDescentEnv(gym.Env):
     else:
       terminate = False
 
+    truncated = False
     if (LA.norm(self.state, np.inf) > 1e5) and (self.mode == 'train'):
-      terminate = True
+    # if (LA.norm(self.state, np.inf) > 1e5):
+      pen = pen -1e6
+      truncated = True
     # Set placeholder for info
     info = {}
 
@@ -100,7 +106,7 @@ class GradDescentEnv(gym.Env):
     # Return step information
     
     action[0] = np.log10(action[0])
-    return self.state, reward, terminate, False, info
+    return self.state, reward, terminate, truncated, info
   
   def render(self):
     pass
@@ -119,7 +125,7 @@ class GradDescentEnv(gym.Env):
     jac_eval = quadobj.get_jacval(ini)
     self.state = np.append(ini,func_val)
     self.state = np.append(self.state,jac_eval)
-
+  
     signs = np.sign(self.state)
     for i in range(int(2*self.dimension+1)):
       if abs(self.state[i]) < 1e-15:

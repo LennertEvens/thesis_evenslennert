@@ -76,9 +76,10 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
         return progress_remaining * initial_value
 
     return func
-action_noise = NormalActionNoise(np.array([0.]),np.array([0.15]))
-model = SAC("MlpPolicy", train_env, learning_rate=1e-2,batch_size=16,verbose=1,gamma=0.99,seed=0,tau=0.005,
-            train_freq=50,policy_kwargs=dict(net_arch=[128,128,128]))
+action_noise = NormalActionNoise(np.array([0.0]),np.array([0.4]))
+# action_noise = OrnsteinUhlenbeckActionNoise(np.array([0.0]),np.array([0.15]))
+model = SAC("MlpPolicy", train_env, learning_rate=1e-2,batch_size=2000,verbose=1,gamma=0.99,seed=0,tau=0.005,
+            train_freq=50,policy_kwargs=dict(net_arch=[128,128,128]),action_noise=action_noise,device=cuda_id)
 
 model.set_logger(new_logger)
 model.learn(total_timesteps=2e6, callback=eval_callback,progress_bar=True)
