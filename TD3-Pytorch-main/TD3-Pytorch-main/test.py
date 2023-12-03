@@ -3,7 +3,11 @@ import matplotlib.pyplot as plt
 eig = 1 + (10-1)*np.random.rand(100,1)
 Q = np.diagflat(eig)
 Q_all = np.reshape(Q,(1,int(np.size(Q)/1)))
-np.savetxt("test_func.txt", Q_all, fmt='%4.15f', delimiter=' ') 
+np.savetxt("test_func.txt", Q_all, fmt='%4.15f', delimiter=' ')
+
+q = 1 + (10-1)*np.random.rand(100,1)
+q = np.reshape(q,(1,int(np.size(q)/1)))
+np.savetxt("test_func_q.txt", q, fmt='%4.15f', delimiter=' ')
 # x1 = np.linspace(-10.0, 10.0, 100)
 # x2 = np.linspace(-10.0, 10.0, 100)
 # X1, X2 = np.meshgrid(x1, x2)

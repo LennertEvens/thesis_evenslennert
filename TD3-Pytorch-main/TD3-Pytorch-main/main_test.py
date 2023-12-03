@@ -13,7 +13,7 @@ import gymnasium as gym
 import gd_env
 function_nb = 0
 
-quadobj = Objective(function_nb,mode='test')
+quadobj = Objective(mode='test')
 Q = quadobj.get_Q()
 eigs, _ = LA.eig(Q)
 max_step = 2./np.max(eigs)
@@ -61,38 +61,30 @@ env = gym.make("gd_env-v0",mode='test')
 env = DummyVecEnv([lambda: env])
 model = SAC.load("gd",env=env)
 obs = env.reset()
-obs_ = obs[0]
-signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
-obs_ = 10**obs_[0:int(2*dimension+1)]
-obs_ = np.multiply(signs,obs_)
-
-# obs_ = ini = 5*np.ones((1,dimension))
+x = env.get_iterate()
+x = env.unwrapped.get_iterate()
+x = x[0]
 done = False
-TD3_traj = np.array(obs_[0:dimension])
+TD3_traj = []
+TD3_traj = np.append(TD3_traj,x)
 action_cache = []
 action_cache_bb = []
 fe_cache_td3 = []
 fe_td3 = 0.
 
 while not done:
-    action, _states = model.predict(obs, deterministic=True)
+    action, _ = model.predict(obs, deterministic=True)
 
     action_cache = np.append(action_cache,10**action)
+    
+    state, reward, done, info  = env.step(action)
 
-    # grad = quadobj.get_jacval(obs_)
-    # obs_ = gradient_descent_step(obs_,grad,10**action)
-    obs, rewards, done, info = env.step(action)
-    print(action)
-    obs_ = obs[0]
-    signs = obs_[int(2*dimension+1):2*int(2*dimension+1)]
-    obs_ = 10**obs_[0:int(2*dimension+1)]
-
-    TD3_traj = np.append(TD3_traj,obs_[0:dimension],axis=0)
-    fe_td3 += 2
+    x = env.get_iterate()
+    x = x[0]
+    TD3_traj = np.append(TD3_traj,x,axis=0)
+    fe_td3 += 1
     fe_cache_td3 = np.append(fe_cache_td3,fe_td3)
-    # jac_eval = quadobj.get_jacval(obs_)
-    # if LA.norm(jac_eval) < 1e-12:
-    #     done = True
+
 
 TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension],0)/dimension),dimension))
 np.savetxt('test.txt', TD3_traj, fmt='%4.15f', delimiter=' ') 

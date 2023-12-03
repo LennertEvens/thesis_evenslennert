@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from objective import Objective
 
 def visualize(data, data_ls, data_td3,quadobj) -> None:
-    x1 = np.linspace(-10.0, 10.0, 100)
-    x2 = np.linspace(-10.0, 10.0, 100)
+    x1 = np.linspace(-10.0, 10.0, 1000)
+    x2 = np.linspace(-10.0, 10.0, 1000)
     X1, X2 = np.meshgrid(x1, x2)
     y = np.concatenate((X1,X2),axis=0)
     Y = quadobj.get_fval(y, True)
