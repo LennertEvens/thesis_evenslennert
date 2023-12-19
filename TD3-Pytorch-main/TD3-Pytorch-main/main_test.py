@@ -77,15 +77,14 @@ while not done:
 
     action_cache = np.append(action_cache,10**action)
     
-    state, reward, done, info  = env.step(action)
+    obs, reward, done, info  = env.step(action)
 
     x = env.get_iterate()
     x = x[0]
     TD3_traj = np.append(TD3_traj,x,axis=0)
     fe_td3 += 1
     fe_cache_td3 = np.append(fe_cache_td3,fe_td3)
-
-
+print(action_cache)
 TD3_traj = np.reshape(TD3_traj[0:-dimension],(int(np.size(TD3_traj[0:-dimension],0)/dimension),dimension))
 np.savetxt('test.txt', TD3_traj, fmt='%4.15f', delimiter=' ') 
 TD3_data = np.append(np.linspace(1,np.size(TD3_traj,0),np.size(TD3_traj,0)),LA.norm(TD3_traj,axis=1),axis = 0)
@@ -136,8 +135,8 @@ plt.clf()
 # plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
 plt.plot(ls_step_cache,label='LS')
 plt.plot(TD3_data[0:,0],action_cache,'r--',label='TD3')
-plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')
-plt.plot(TD3_data[0:,0],0.5*max_step*np.ones((np.size(action_cache))),label='$1/\lambda_{max}$')
+plt.plot(max_step*np.ones((np.size(ls_step_cache))),'k',label='$2/\lambda_{max}$')
+plt.plot(0.5*max_step*np.ones((np.size(ls_step_cache))),label='$1/\lambda_{max}$')
 # plt.plot(bbo_step_cache,label='BBO')
 # plt.plot(ls_td3_step_cache,'y',label='LS_TD3')
 # plt.plot(TD3_data[0:,0],max_step*np.ones((np.size(action_cache))),'k',label='$2/\lambda_{max}$')

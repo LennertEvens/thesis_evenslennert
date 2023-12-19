@@ -8,6 +8,7 @@ from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.logger import configure, read_csv
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise, NormalActionNoise
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from typing import Callable
 import gd_env
 import torch
@@ -24,7 +25,7 @@ print(f"ID of current CUDA device:{torch.cuda.current_device()}")
 print(f"Name of current CUDA device:{torch.cuda.get_device_name(cuda_id)}")
 
 env_id = "gd_env-v0"
-eval_env_id = "gd_env_eval-v0"
+eval_env_id = "gd_env-v0"
 n_training_envs = 1
 n_eval_envs = 1
 
@@ -76,12 +77,13 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
         return progress_remaining * initial_value
 
     return func
-action_noise = NormalActionNoise(np.array([0.0]),np.array([0.4]))
-# action_noise = OrnsteinUhlenbeckActionNoise(np.array([0.0]),np.array([0.15]))
-model = SAC("MlpPolicy", train_env, learning_rate=1e-2,batch_size=2000,verbose=1,gamma=0.99,seed=0,tau=0.005,
-            train_freq=50,policy_kwargs=dict(net_arch=[128,128,128]),action_noise=action_noise,device=cuda_id)
+action_noise = NormalActionNoise(np.array([0.0]),np.array([0.15]))
+
+# action_noise = OrnsteinUhlenbeckActionNoise(np.array([0.0]),np.array([0.01]))
+model = TD3("MlpPolicy", train_env,batch_size=2000,verbose=1,learning_rate=1e-4,gamma=0.99,seed=0,tau=0.005,
+            train_freq=50,policy_delay=2,policy_kwargs=dict(net_arch=[128,128,128]),action_noise=action_noise,device=cuda_id, buffer_size=int(5e6))
 
 model.set_logger(new_logger)
-model.learn(total_timesteps=2e6, callback=eval_callback,progress_bar=True)
+model.learn(total_timesteps=3e6, callback=eval_callback,progress_bar=True)
 
-model.save("gd")
+model.save("gd2")

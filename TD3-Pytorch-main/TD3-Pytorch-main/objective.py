@@ -80,9 +80,19 @@ class Objective:
             # U = np.reshape(U,(int(np.sqrt(np.size(U))),int(np.sqrt(np.size(U)))))
             # Q = np.matmul(U,Q)
             # Q = np.matmul(Q,np.transpose(U))
+            filename = "test_func.txt"
+            file1 = open(filename, "r")
+            lines = file1.readlines()
+            Q = np.fromstring(lines[0], dtype=float, sep=' ')
+            Q = np.reshape(Q,(int(np.sqrt(np.size(Q))),int(np.sqrt(np.size(Q)))))
+            filename = "test_func_q.txt"
+            file1 = open(filename, "r")
+            lines = file1.readlines()
+            q = np.fromstring(lines[0], dtype=float, sep=' ')
+            q = np.reshape(q,(np.size(q),1))
         self.Q = Q
         self.q = q
-        self.q = np.zeros(100)
+        self.q = np.zeros((int(np.sqrt(np.size(Q))),1))
 
     def get_Q(self):
         return self.Q
